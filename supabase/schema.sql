@@ -1,7 +1,32 @@
 -- =============================================
 -- VPO Social Integration Platform
 -- Full Database Schema — run in Supabase SQL Editor
+-- Safe to re-run: drops existing objects first
 -- =============================================
+
+-- =============================================
+-- DROP EVERYTHING (reverse dependency order)
+-- =============================================
+drop trigger  if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user() cascade;
+drop function if exists public.get_community_member_count(uuid) cascade;
+drop function if exists public.get_event_participant_count(uuid) cascade;
+drop function if exists public.is_community_member(uuid, uuid) cascade;
+drop function if exists public.is_event_participant(uuid, uuid) cascade;
+
+drop table if exists public.admin_actions      cascade;
+drop table if exists public.notifications      cascade;
+drop table if exists public.direct_messages    cascade;
+drop table if exists public.messages           cascade;
+drop table if exists public.rooms              cascade;
+drop table if exists public.event_participants cascade;
+drop table if exists public.events             cascade;
+drop table if exists public.community_posts    cascade;
+drop table if exists public.community_members  cascade;
+drop table if exists public.communities        cascade;
+drop table if exists public.resources          cascade;
+drop table if exists public.resource_categories cascade;
+drop table if exists public.profiles           cascade;
 
 -- =============================================
 -- PROFILES
@@ -312,6 +337,17 @@ create policy "Admins can insert actions"
   with check (exists (
     select 1 from public.profiles where id = auth.uid() and role = 'admin'
   ));
+
+-- =============================================
+-- GRANTS
+-- =============================================
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant select on tables to anon;
 
 -- =============================================
 -- HELPER FUNCTIONS

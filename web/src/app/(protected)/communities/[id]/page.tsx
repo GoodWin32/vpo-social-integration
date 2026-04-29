@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import JoinCommunityButton from './JoinCommunityButton'
 import PostForm from './PostForm'
+import MemberList from './MemberList'
 
 export default async function CommunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -123,16 +124,13 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
             <h3 className="font-semibold text-gray-800 text-sm mb-3">
               Учасники ({memberCount})
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {members?.slice(0, 12).map(m => (
-                <Avatar key={m.user_id} src={m.profiles?.avatar_url} name={m.profiles?.full_name} size="sm" />
-              ))}
-              {memberCount > 12 && (
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-medium">
-                  +{memberCount - 12}
-                </div>
-              )}
-            </div>
+            <MemberList
+              members={(members ?? []).slice(0, 12) as Parameters<typeof MemberList>[0]['members']}
+              currentUserId={user?.id ?? null}
+            />
+            {memberCount > 12 && (
+              <p className="text-xs text-gray-400 mt-2 text-center">+{memberCount - 12} ще</p>
+            )}
           </div>
 
           {/* Related events */}

@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import FileUpload from '@/components/ui/FileUpload'
 import PageHeader from '@/components/layout/PageHeader'
 import { EVENT_CATEGORIES, UKRAINE_REGIONS } from '@/lib/types'
 import { Suspense } from 'react'
@@ -27,7 +28,7 @@ function CreateEventForm() {
   const [form, setForm] = useState({
     title: '', description: '', city: '', region: '',
     address: '', online_link: '', format: 'offline',
-    category: '', image_url: '',
+    category: '', image_url: '' as string | null,
     starts_at: '', ends_at: '',
     max_participants: '',
     community_id: searchParams.get('community') ?? '',
@@ -125,10 +126,16 @@ function CreateEventForm() {
         <Input label="Посилання на онлайн-трансляцію" value={form.online_link} onChange={e => setField('online_link', e.target.value)} placeholder="https://meet.google.com/..." />
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Макс. учасників" type="number" min="1" value={form.max_participants} onChange={e => setField('max_participants', e.target.value)} placeholder="Необмежено" />
-        <Input label="URL зображення" value={form.image_url} onChange={e => setField('image_url', e.target.value)} placeholder="https://..." />
-      </div>
+      <Input label="Макс. учасників" type="number" min="1" value={form.max_participants} onChange={e => setField('max_participants', e.target.value)} placeholder="Необмежено" />
+
+      <FileUpload
+        bucket="images"
+        folder="events"
+        currentUrl={form.image_url}
+        onUpload={url => setForm(prev => ({ ...prev, image_url: url }))}
+        label="Обкладинка події"
+        hint="До 10 МБ · JPEG, PNG, WebP, GIF"
+      />
 
       {errors.submit && (
         <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">{errors.submit}</div>

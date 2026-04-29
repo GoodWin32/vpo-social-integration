@@ -8,6 +8,7 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
+import FileUpload from '@/components/ui/FileUpload'
 import PageHeader from '@/components/layout/PageHeader'
 import { profileCompletion } from '@/lib/utils'
 import { UKRAINE_REGIONS, INTERESTS } from '@/lib/types'
@@ -16,6 +17,7 @@ const regionOptions = UKRAINE_REGIONS.map(r => ({ value: r, label: r }))
 
 export default function ProfilePage() {
   const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -25,6 +27,7 @@ export default function ProfilePage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      setUserId(user.id)
       supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
         if (data) setProfile(data)
         setLoading(false)
@@ -44,20 +47,23 @@ export default function ProfilePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (!userId) return
     setSaving(true)
     setError(null)
 
-    const { error } = await supabase.from('profiles').update({
-      full_name:     profile.full_name,
-      avatar_url:    profile.avatar_url,
-      city:          profile.city,
-      region:        profile.region,
-      origin_city:   profile.origin_city,
-      origin_region: profile.origin_region,
-      bio:           profile.bio,
-      phone:         profile.phone,
-      interests:     profile.interests,
-    }).eq('id', profile.id as string)
+    const { error } = await supabase.from('profiles').upsert({
+      id:            userId,
+      full_name:     profile.full_name ?? null,
+      avatar_url:    profile.avatar_url ?? null,
+      city:          profile.city ?? null,
+      region:        profile.region ?? null,
+      origin_city:   profile.origin_city ?? null,
+      origin_region: profile.origin_region ?? null,
+      bio:           profile.bio ?? null,
+      phone:         profile.phone ?? null,
+      interests:     profile.interests ?? [],
+      updated_at:    new Date().toISOString(),
+    })
 
     if (error) setError(error.message)
     else setSaved(true)
@@ -83,7 +89,18 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl shadow-sm p-6 text-center">
             <div className="flex justify-center mb-4">
-              <Avatar src={profile.avatar_url as string} name={profile.full_name as string} size="xl" />
+              {userId ? (
+                <FileUpload
+                  bucket="avatars"
+                  folder={userId}
+                  currentUrl={profile.avatar_url as string | null}
+                  onUpload={url => setField('avatar_url', url)}
+                  shape="circle"
+                  hint="До 5 МБ"
+                />
+              ) : (
+                <Avatar src={profile.avatar_url as string} name={profile.full_name as string} size="xl" />
+              )}
             </div>
             <h2 className="font-bold text-gray-900">{(profile.full_name as string) || 'Без імені'}</h2>
             <p className="text-sm text-gray-400 mt-1">{(profile.city as string) || 'Місто не вказано'}</p>
@@ -118,7 +135,6 @@ export default function ProfilePage() {
             <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-3">Особиста інформація</h3>
 
             <Input label="Повне ім'я" value={(profile.full_name as string) ?? ''} onChange={e => setField('full_name', e.target.value)} placeholder="Іван Іваненко" />
-            <Input label="URL аватару" value={(profile.avatar_url as string) ?? ''} onChange={e => setField('avatar_url', e.target.value)} placeholder="https://..." hint="Посилання на фото профілю" />
             <Textarea label="Про себе" value={(profile.bio as string) ?? ''} onChange={e => setField('bio', e.target.value)} rows={3} placeholder="Розкажіть трохи про себе..." />
             <Input label="Телефон" value={(profile.phone as string) ?? ''} onChange={e => setField('phone', e.target.value)} placeholder="+380 XX XXX XX XX" />
 

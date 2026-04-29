@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import FileUpload from '@/components/ui/FileUpload'
 import PageHeader from '@/components/layout/PageHeader'
 import { COMMUNITY_CATEGORIES, UKRAINE_REGIONS } from '@/lib/types'
 
@@ -19,7 +20,7 @@ export default function CreateCommunityPage() {
 
   const [form, setForm] = useState({
     name: '', description: '', city: '', region: '',
-    category: '', rules: '', image_url: '',
+    category: '', rules: '', image_url: '' as string | null,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -83,7 +84,14 @@ export default function CreateCommunityPage() {
           <Select label="Регіон" value={form.region} onChange={e => setField('region', e.target.value)} options={regionOptions} placeholder="Оберіть регіон" />
         </div>
 
-        <Input label="URL зображення" value={form.image_url} onChange={e => setField('image_url', e.target.value)} placeholder="https://..." hint="Посилання на обкладинку спільноти (необов'язково)" />
+        <FileUpload
+          bucket="images"
+          folder="communities"
+          currentUrl={form.image_url}
+          onUpload={url => setForm(prev => ({ ...prev, image_url: url }))}
+          label="Обкладинка спільноти"
+          hint="До 10 МБ · JPEG, PNG, WebP, GIF"
+        />
         <Textarea label="Правила спільноти" value={form.rules} onChange={e => setField('rules', e.target.value)} rows={3} placeholder="Опишіть правила поведінки в спільноті..." />
 
         {errors.submit && (

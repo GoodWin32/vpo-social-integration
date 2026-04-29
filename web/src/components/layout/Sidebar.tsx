@@ -8,12 +8,14 @@ import Avatar from '@/components/ui/Avatar'
 type NavItem = { href: string; label: string; icon: string }
 
 const mainNav: NavItem[] = [
-  { href: '/dashboard',     label: 'Головна',     icon: '🏠' },
-  { href: '/communities',   label: 'Спільноти',   icon: '👥' },
-  { href: '/events',        label: 'Події',        icon: '📅' },
-  { href: '/resources',     label: 'Ресурси',      icon: '📋' },
-  { href: '/chat',          label: 'Чат',          icon: '💬' },
-  { href: '/notifications', label: 'Сповіщення',   icon: '🔔' },
+  { href: '/dashboard',     label: 'Головна',      icon: '🏠' },
+  { href: '/communities',   label: 'Спільноти',    icon: '👥' },
+  { href: '/events',        label: 'Події',         icon: '📅' },
+  { href: '/resources',     label: 'Ресурси',       icon: '📋' },
+  { href: '/chat',          label: 'Чат',           icon: '💬' },
+  { href: '/messages',      label: 'Повідомлення',  icon: '✉️' },
+  { href: '/friends',       label: 'Друзі',         icon: '🤝' },
+  { href: '/notifications', label: 'Сповіщення',    icon: '🔔' },
 ]
 
 const profileNav: NavItem[] = [
@@ -32,10 +34,14 @@ export default function Sidebar({
   profile,
   isAdmin = false,
   unreadCount = 0,
+  unreadDmCount = 0,
+  pendingFriendCount = 0,
 }: {
   profile: { id: string; full_name: string | null; avatar_url: string | null; city: string | null } | null
   isAdmin?: boolean
   unreadCount?: number
+  unreadDmCount?: number
+  pendingFriendCount?: number
 }) {
   const pathname = usePathname()
 
@@ -56,6 +62,16 @@ export default function Sidebar({
         {href === '/notifications' && unreadCount > 0 && (
           <span className="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
             {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+        {href === '/messages' && unreadDmCount > 0 && (
+          <span className="ml-auto bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+            {unreadDmCount > 99 ? '99+' : unreadDmCount}
+          </span>
+        )}
+        {href === '/friends' && pendingFriendCount > 0 && (
+          <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+            {pendingFriendCount}
           </span>
         )}
       </Link>

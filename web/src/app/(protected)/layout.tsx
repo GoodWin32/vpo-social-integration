@@ -28,11 +28,23 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     )
   }
 
-  const { count: unreadCount } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('is_read', false)
+  const [{ count: unreadCount }, { count: unreadDmCount }, { count: pendingFriendCount }] = await Promise.all([
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false),
+    supabase
+      .from('direct_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false),
+    supabase
+      .from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('addressee_id', user.id)
+      .eq('status', 'pending'),
+  ])
 
   return (
     <div className="flex min-h-screen">
@@ -40,6 +52,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         profile={profile}
         isAdmin={profile?.role === 'admin'}
         unreadCount={unreadCount ?? 0}
+        unreadDmCount={unreadDmCount ?? 0}
+        pendingFriendCount={pendingFriendCount ?? 0}
       />
       <main className="flex-1 overflow-auto">
         {children}
