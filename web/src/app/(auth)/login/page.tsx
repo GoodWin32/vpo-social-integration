@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -21,7 +23,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError(error.message)
+      setError('Невірний email або пароль. Спробуйте ще раз.')
       setLoading(false)
       return
     }
@@ -31,44 +33,47 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Вхід</h1>
-        <p className="text-gray-500 mb-6 text-sm">Увійдіть до платформи соціальної інтеграції ВПО</p>
+    <div className="w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-md p-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Вхід до акаунту</h1>
+        <p className="text-gray-500 text-sm mb-7">Введіть ваші дані для входу</p>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            required
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="your@email.com"
+            autoComplete="email"
+          />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
-            <input
+            <Input
+              label="Пароль"
               type="password"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
+              autoComplete="current-password"
             />
+            <div className="text-right mt-1">
+              <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
+                Забули пароль?
+              </Link>
+            </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'Завантаження...' : 'Увійти'}
-          </button>
+          <Button type="submit" loading={loading} className="w-full" size="lg">
+            Увійти
+          </Button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">

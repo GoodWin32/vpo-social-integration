@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git remote *)",
+      "PowerShell(gh --version)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(git checkout *)",
+      "Bash(git push *)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Bash(npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
+      "Bash(npm install *)",
+      "Bash(gh pr create --base main --head develop --title 'feat: initial Next.js app with Supabase auth and realtime chat' --body ' *)",
+      "Bash(rm -f src/app/dashboard/page.tsx src/app/chat/page.tsx)",
+      "Bash(rmdir src/app/dashboard)",
+      "Bash(rmdir src/app/chat)",
+      "Bash(npm run *)",
+      "Bash(node_modules/.bin/next --version)"
+    ]
+  }
+}
