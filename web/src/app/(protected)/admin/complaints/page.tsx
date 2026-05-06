@@ -89,11 +89,11 @@ export default async function AdminComplaintsPage({
       {complaints && complaints.length > 0 ? (
         <div className="space-y-4">
           {complaints.map(c => {
-            const post = c.community_posts as {
+            const post = c.community_posts as unknown as {
               id: string; content: string; community_id: string; author_id: string
               profiles?: { id: string; full_name: string | null; avatar_url: string | null } | null
             } | null
-            const reporter = c.profiles as { id: string; full_name: string | null } | null
+            const reporter = c.profiles as unknown as { id: string; full_name: string | null } | null
             const statusInfo = STATUS_LABELS[c.status] ?? STATUS_LABELS.pending
 
             return (
