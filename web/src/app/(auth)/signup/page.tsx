@@ -71,10 +71,11 @@ export default function SignupPage() {
       password: form.password,
       options: {
         data: {
-          full_name: form.fullName,
-          city: form.city,
-          region: form.region,
-          interests: form.selectedInterests,
+          full_name:  form.fullName,
+          city:       form.city || null,
+          region:     form.region || null,
+          interests:  form.selectedInterests,
+          is_vpo:     form.userRole === 'vpo',
         },
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },

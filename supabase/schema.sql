@@ -63,8 +63,18 @@ create policy "Users can update their own profile"
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, new.raw_user_meta_data ->> 'full_name');
+  insert into public.profiles (id, full_name, city, region, interests, is_vpo)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'full_name',
+    nullif(new.raw_user_meta_data ->> 'city', ''),
+    nullif(new.raw_user_meta_data ->> 'region', ''),
+    coalesce(
+      array(select jsonb_array_elements_text(new.raw_user_meta_data -> 'interests')),
+      '{}'::text[]
+    ),
+    coalesce((new.raw_user_meta_data ->> 'is_vpo')::boolean, true)
+  );
   return new;
 end;
 $$ language plpgsql security definer;

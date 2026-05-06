@@ -154,6 +154,27 @@ export type Notification = {
   created_at: string
 }
 
+export type ComplaintReason = 'spam' | 'harassment' | 'misinformation' | 'inappropriate' | 'other'
+export type ComplaintStatus = 'pending' | 'reviewed' | 'dismissed'
+
+export type PostComplaint = {
+  id: string
+  post_id: string
+  reporter_id: string
+  reason: ComplaintReason
+  comment: string | null
+  status: ComplaintStatus
+  created_at: string
+  community_posts?: {
+    id: string
+    content: string
+    author_id: string
+    community_id: string
+    profiles?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+  }
+  profiles?: Pick<Profile, 'id' | 'full_name'>
+}
+
 export type AdminAction = {
   id: string
   admin_id: string | null

@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
+import { createClient } from '@/lib/supabase/client'
 
 type NavItem = { href: string; label: string; icon: string }
 
@@ -19,7 +21,7 @@ const mainNav: NavItem[] = [
 ]
 
 const profileNav: NavItem[] = [
-  { href: '/profile',  label: 'Профіль',     icon: '👤' },
+  { href: '/profile', label: 'Профіль', icon: '👤' },
 ]
 
 const adminNav: NavItem[] = [
@@ -28,14 +30,15 @@ const adminNav: NavItem[] = [
   { href: '/admin/communities',  label: 'Спільноти',    icon: '👥' },
   { href: '/admin/events',       label: 'Події',        icon: '📅' },
   { href: '/admin/resources',    label: 'Ресурси',      icon: '📋' },
+  { href: '/admin/complaints',   label: 'Скарги',       icon: '🚩' },
 ]
 
 export default function Sidebar({
   profile,
   isAdmin = false,
-  unreadCount = 0,
-  unreadDmCount = 0,
-  pendingFriendCount = 0,
+  unreadCount: initialUnread = 0,
+  unreadDmCount: initialDm = 0,
+  pendingFriendCount: initialFriends = 0,
 }: {
   profile: { id: string; full_name: string | null; avatar_url: string | null; city: string | null } | null
   isAdmin?: boolean
@@ -44,6 +47,80 @@ export default function Sidebar({
   pendingFriendCount?: number
 }) {
   const pathname = usePathname()
+  const [unreadCount, setUnreadCount]         = useState(initialUnread)
+  const [unreadDmCount, setUnreadDmCount]     = useState(initialDm)
+  const [pendingFriendCount, setPendingFriendCount] = useState(initialFriends)
+
+  // Keep badge counts live via Realtime
+  useEffect(() => {
+    if (!profile?.id) return
+    const supabase = createClient()
+    const userId = profile.id
+
+    // Notification badge — drop to 0 when user visits /notifications
+    const notifChannel = supabase
+      .channel(`sidebar-notif:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        async () => {
+          const { count } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('is_read', false)
+          setUnreadCount(count ?? 0)
+        })
+      .subscribe()
+
+    // DM badge
+    const dmChannel = supabase
+      .channel(`sidebar-dm:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${userId}` },
+        async () => {
+          const { count } = await supabase
+            .from('direct_messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('receiver_id', userId)
+            .eq('is_read', false)
+          setUnreadDmCount(count ?? 0)
+        })
+      .subscribe()
+
+    // Friend request badge
+    const friendChannel = supabase
+      .channel(`sidebar-friends:${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships', filter: `addressee_id=eq.${userId}` },
+        async () => {
+          const { count } = await supabase
+            .from('friendships')
+            .select('id', { count: 'exact', head: true })
+            .eq('addressee_id', userId)
+            .eq('status', 'pending')
+          setPendingFriendCount(count ?? 0)
+        })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(notifChannel)
+      supabase.removeChannel(dmChannel)
+      supabase.removeChannel(friendChannel)
+    }
+  }, [profile?.id])
+
+  // When navigating to /notifications, reset the badge immediately
+  useEffect(() => {
+    if (pathname === '/notifications') setUnreadCount(0)
+    if (pathname === '/messages')      setUnreadDmCount(0)
+    if (pathname === '/friends')       setPendingFriendCount(0)
+  }, [pathname])
+
+  function Badge({ count, color }: { count: number; color: string }) {
+    if (count === 0) return null
+    return (
+      <span className={`ml-auto text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center ${color}`}>
+        {count > 99 ? '99+' : count}
+      </span>
+    )
+  }
 
   function NavLink({ href, label, icon }: NavItem) {
     const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
@@ -52,28 +129,14 @@ export default function Sidebar({
         href={href}
         className={cn(
           'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-          active
-            ? 'bg-blue-50 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         )}
       >
         <span className="text-base">{icon}</span>
         <span>{label}</span>
-        {href === '/notifications' && unreadCount > 0 && (
-          <span className="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-        {href === '/messages' && unreadDmCount > 0 && (
-          <span className="ml-auto bg-blue-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
-            {unreadDmCount > 99 ? '99+' : unreadDmCount}
-          </span>
-        )}
-        {href === '/friends' && pendingFriendCount > 0 && (
-          <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
-            {pendingFriendCount}
-          </span>
-        )}
+        {href === '/notifications' && <Badge count={unreadCount}      color="bg-red-500"    />}
+        {href === '/messages'      && <Badge count={unreadDmCount}    color="bg-blue-600"   />}
+        {href === '/friends'       && <Badge count={pendingFriendCount} color="bg-orange-500" />}
       </Link>
     )
   }

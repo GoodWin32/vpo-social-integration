@@ -39,6 +39,14 @@ export default function FriendButton({
 
   async function sendRequest() {
     setActing(true)
+
+    // Fetch the current user's name for the notification body
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', currentUserId)
+      .single()
+
     await supabase.from('friendships').insert({
       requester_id: currentUserId,
       addressee_id: targetUserId,
@@ -47,23 +55,39 @@ export default function FriendButton({
       user_id: targetUserId,
       type: 'community',
       title: 'Запит у друзі',
-      body: `${targetName ?? 'Користувач'} хоче додати вас до друзів`,
+      body: `${myProfile?.full_name ?? 'Користувач'} хоче додати вас до друзів`,
       link: '/friends',
     })
     setStatus('pending_sent')
     setActing(false)
   }
 
-  async function accept() {
+  async function acceptAndNotify() {
     setActing(true)
     await supabase
       .from('friendships')
       .update({ status: 'accepted', updated_at: new Date().toISOString() })
       .eq('requester_id', targetUserId)
       .eq('addressee_id', currentUserId)
+
+    // Notify the requester that their request was accepted
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', currentUserId)
+      .single()
+
+    await supabase.from('notifications').insert({
+      user_id: targetUserId,
+      type: 'community',
+      title: 'Запит у друзі прийнято',
+      body: `${myProfile?.full_name ?? 'Користувач'} прийняв(ла) ваш запит у друзі`,
+      link: '/friends',
+    })
     setStatus('accepted')
     setActing(false)
   }
+
 
   async function remove() {
     setActing(true)
@@ -110,7 +134,7 @@ export default function FriendButton({
     return (
       <div className="flex gap-1.5">
         <button
-          onClick={accept}
+          onClick={acceptAndNotify}
           disabled={acting}
           className="text-xs px-3 py-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-40"
         >
