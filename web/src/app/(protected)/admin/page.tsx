@@ -11,6 +11,7 @@ export default async function AdminDashboardPage() {
     { count: communityCount },
     { count: eventCount },
     { count: resourceCount },
+    { count: pendingComplaintCount },
     { data: recentUsers },
     { data: recentActions },
   ] = await Promise.all([
@@ -18,15 +19,17 @@ export default async function AdminDashboardPage() {
     supabase.from('communities').select('id', { count: 'exact', head: true }),
     supabase.from('events').select('id', { count: 'exact', head: true }),
     supabase.from('resources').select('id', { count: 'exact', head: true }),
+    supabase.from('post_complaints').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('profiles').select('id, full_name, city, role, status, created_at').order('created_at', { ascending: false }).limit(5),
     supabase.from('admin_actions').select('*, profiles(full_name)').order('created_at', { ascending: false }).limit(10),
   ])
 
   const stats = [
-    { icon: '👤', label: 'Користувачів', value: userCount ?? 0,    href: '/admin/users',       color: 'blue'   },
-    { icon: '👥', label: 'Спільнот',     value: communityCount ?? 0, href: '/admin/communities', color: 'green'  },
-    { icon: '📅', label: 'Подій',        value: eventCount ?? 0,     href: '/admin/events',      color: 'purple' },
-    { icon: '📋', label: 'Ресурсів',     value: resourceCount ?? 0,  href: '/admin/resources',   color: 'orange' },
+    { icon: '👤', label: 'Користувачів', value: userCount ?? 0,             href: '/admin/users',       color: 'blue'   },
+    { icon: '👥', label: 'Спільнот',     value: communityCount ?? 0,        href: '/admin/communities', color: 'green'  },
+    { icon: '📅', label: 'Подій',        value: eventCount ?? 0,            href: '/admin/events',      color: 'purple' },
+    { icon: '📋', label: 'Ресурсів',     value: resourceCount ?? 0,         href: '/admin/resources',   color: 'orange' },
+    { icon: '🚩', label: 'Нових скарг',  value: pendingComplaintCount ?? 0, href: '/admin/complaints',  color: 'red'    },
   ]
 
   const colorMap: Record<string, string> = {
@@ -34,6 +37,7 @@ export default async function AdminDashboardPage() {
     green:  'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
     orange: 'bg-orange-50 text-orange-600',
+    red:    'bg-red-50 text-red-600',
   }
 
   return (
@@ -86,6 +90,7 @@ export default async function AdminDashboardPage() {
               { label: 'Модерація спільнот',       href: '/admin/communities',  icon: '👥' },
               { label: 'Управління подіями',        href: '/admin/events',       icon: '📅' },
               { label: 'Ресурси допомоги',          href: '/admin/resources',    icon: '📋' },
+              { label: 'Скарги користувачів',       href: '/admin/complaints',   icon: '🚩' },
             ].map(a => (
               <Link key={a.href} href={a.href} className="bg-gray-50 hover:bg-blue-50 rounded-xl p-4 text-center group transition">
                 <span className="text-2xl block mb-1">{a.icon}</span>

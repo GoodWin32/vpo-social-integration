@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import { formatDate, formatRelativeTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import JoinCommunityButton from './JoinCommunityButton'
 import PostForm from './PostForm'
+import PostItem from './PostItem'
 import MemberList from './MemberList'
 
 export default async function CommunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -88,16 +89,11 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
             {posts && posts.length > 0 ? (
               <div className="space-y-4 mt-4">
                 {posts.map(post => (
-                  <div key={post.id} className="border-t border-gray-50 pt-4 first:border-0 first:pt-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar src={post.profiles?.avatar_url} name={post.profiles?.full_name} size="sm" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{post.profiles?.full_name}</p>
-                        <p className="text-xs text-gray-400">{formatRelativeTime(post.created_at)}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap pl-10">{post.content}</p>
-                  </div>
+                  <PostItem
+                    key={post.id}
+                    post={post as Parameters<typeof PostItem>[0]['post']}
+                    currentUserId={user?.id ?? null}
+                  />
                 ))}
               </div>
             ) : (
