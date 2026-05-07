@@ -21,6 +21,27 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
     supabase.from('events').select('*').eq('community_id', id).gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
   ])
 
+  // Fetch likes and comment counts for all posts
+  const postIds = (posts ?? []).map(p => p.id)
+  const [{ data: likesData }, { data: userLikesData }, { data: commentCountsData }] = postIds.length > 0
+    ? await Promise.all([
+        supabase.from('post_likes').select('post_id').in('post_id', postIds),
+        user ? supabase.from('post_likes').select('post_id').in('post_id', postIds).eq('user_id', user.id) : Promise.resolve({ data: [] }),
+        supabase.from('post_comments').select('post_id').in('post_id', postIds),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }]
+
+  // Build maps for quick lookup
+  const likesMap = (likesData ?? []).reduce((acc: Record<string, number>, row: { post_id: string }) => {
+    acc[row.post_id] = (acc[row.post_id] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  const likedByMeSet = new Set((userLikesData ?? []).map((r: { post_id: string }) => r.post_id))
+  const commentCountMap = (commentCountsData ?? []).reduce((acc: Record<string, number>, row: { post_id: string }) => {
+    acc[row.post_id] = (acc[row.post_id] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
   if (!community) notFound()
 
   const isMember = user ? members?.some(m => m.user_id === user.id) ?? false : false
@@ -93,6 +114,9 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
                     key={post.id}
                     post={post as Parameters<typeof PostItem>[0]['post']}
                     currentUserId={user?.id ?? null}
+                    initialLikes={likesMap[post.id] ?? 0}
+                    initialLiked={likedByMeSet.has(post.id)}
+                    initialCommentCount={commentCountMap[post.id] ?? 0}
                   />
                 ))}
               </div>

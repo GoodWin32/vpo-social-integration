@@ -26,11 +26,20 @@ export default async function UserProfilePage({
 
   if (!profile) notFound()
 
-  // Communities in common
-  const { data: myMemberships } = await supabase
-    .from('community_members')
-    .select('community_id')
-    .eq('user_id', user.id)
+  // Profile stats + communities in common — all in parallel
+  const [
+    { data: myMemberships },
+    { count: friendCount },
+    { count: communityCount },
+    { count: eventCount },
+  ] = await Promise.all([
+    supabase.from('community_members').select('community_id').eq('user_id', user.id),
+    supabase.from('friendships').select('id', { count: 'exact', head: true })
+      .or(`requester_id.eq.${id},addressee_id.eq.${id}`)
+      .eq('status', 'accepted'),
+    supabase.from('community_members').select('id', { count: 'exact', head: true }).eq('user_id', id),
+    supabase.from('event_registrations').select('id', { count: 'exact', head: true }).eq('user_id', id),
+  ])
 
   const myIds = (myMemberships ?? []).map(m => m.community_id)
 
@@ -92,6 +101,22 @@ export default async function UserProfilePage({
             {profile.bio && (
               <p className="text-sm text-gray-600 mt-3 leading-relaxed">{profile.bio}</p>
             )}
+
+            {/* Stats row */}
+            <div className="flex gap-5 mt-4 pt-4 border-t border-gray-100 flex-wrap">
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-900">{friendCount ?? 0}</p>
+                <p className="text-xs text-gray-400">Друзів</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-900">{communityCount ?? 0}</p>
+                <p className="text-xs text-gray-400">Спільнот</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-900">{eventCount ?? 0}</p>
+                <p className="text-xs text-gray-400">Подій</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

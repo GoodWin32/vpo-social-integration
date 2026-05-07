@@ -18,6 +18,7 @@ const mainNav: NavItem[] = [
   { href: '/messages',      label: 'Повідомлення',  icon: '✉️' },
   { href: '/friends',       label: 'Друзі',         icon: '🤝' },
   { href: '/users',         label: 'Люди',          icon: '🔍' },
+  { href: '/help',          label: 'Взаємодопомога', icon: '🤲' },
   { href: '/notifications', label: 'Сповіщення',    icon: '🔔' },
 ]
 

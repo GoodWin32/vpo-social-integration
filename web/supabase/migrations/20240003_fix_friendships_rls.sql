@@ -1,13 +1,18 @@
--- Fix RLS policies on friendships table
+-- ============================================================
+-- Create friendships table + RLS policies
 -- Run in Supabase SQL Editor
+-- ============================================================
 
--- Drop existing policies if any
-drop policy if exists "Users can view their own friendships" on friendships;
-drop policy if exists "Users can send friend requests"      on friendships;
-drop policy if exists "Users can update received requests"  on friendships;
-drop policy if exists "Users can delete their friendships"  on friendships;
+create table if not exists friendships (
+  id           uuid        primary key default gen_random_uuid(),
+  requester_id uuid        not null references profiles(id) on delete cascade,
+  addressee_id uuid        not null references profiles(id) on delete cascade,
+  status       text        not null default 'pending' check (status in ('pending', 'accepted')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  unique (requester_id, addressee_id)
+);
 
--- Enable RLS (idempotent)
 alter table friendships enable row level security;
 
 -- View: both parties can see the friendship row
@@ -34,7 +39,7 @@ create policy "Users can delete their friendships"
   to authenticated
   using (requester_id = auth.uid() or addressee_id = auth.uid());
 
--- Also ensure profiles are readable by all authenticated users (needed for search)
+-- Ensure profiles are readable by all authenticated users (needed for search)
 drop policy if exists "Profiles are viewable by authenticated users" on profiles;
 create policy "Profiles are viewable by authenticated users"
   on profiles for select
