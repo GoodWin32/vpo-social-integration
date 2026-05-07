@@ -29,9 +29,13 @@ export default function FriendsClient({
   function PersonRow({ person, action }: { person: Person; action: React.ReactNode }) {
     return (
       <div className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm">
-        <Avatar src={person.avatar_url} name={person.full_name} size="md" />
+        <Link href={`/users/${person.id}`} className="shrink-0">
+          <Avatar src={person.avatar_url} name={person.full_name} size="md" />
+        </Link>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-800 truncate">{person.full_name ?? 'Користувач'}</p>
+          <Link href={`/users/${person.id}`} className="font-medium text-gray-800 hover:text-blue-600 transition truncate block">
+            {person.full_name ?? 'Користувач'}
+          </Link>
           {person.city && <p className="text-xs text-gray-400">{person.city}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
