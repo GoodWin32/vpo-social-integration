@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const justRegistered = searchParams.get('registered') === '1'
   const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
@@ -36,7 +38,13 @@ export default function LoginPage() {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-md p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Вхід до акаунту</h1>
-        <p className="text-gray-500 text-sm mb-7">Введіть ваші дані для входу</p>
+        <p className="text-gray-500 text-sm mb-4">Введіть ваші дані для входу</p>
+
+        {justRegistered && (
+          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-4">
+            ✅ Реєстрацію завершено! Тепер ви можете увійти.
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <Input

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Input from '@/components/ui/Input'
@@ -32,6 +33,7 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   function setField(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -66,7 +68,7 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -81,14 +83,26 @@ export default function SignupPage() {
       },
     })
 
+    setLoading(false)
+
     if (error) {
+      // If email sending fails but signup succeeded, still allow login
+      if (error.message.toLowerCase().includes('email') && error.message.toLowerCase().includes('sending')) {
+        router.push('/login?registered=1')
+        return
+      }
       setErrors({ submit: error.message })
-      setLoading(false)
       return
     }
 
+    // If session was created immediately (email confirmation disabled) → go to dashboard
+    if (data.session) {
+      router.push('/dashboard')
+      return
+    }
+
+    // Otherwise show "check your email" screen
     setSuccess(true)
-    setLoading(false)
   }
 
   if (success) {
